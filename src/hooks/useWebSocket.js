@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import SockJS from 'sockjs-client';
+import { API_CONFIG } from '../config';
 
-const WS_URL = 'http://localhost:8080/api/ws';
+const WS_URL = API_CONFIG.WS_URL;
 
 export const useWebSocket = (authToken, currentUser, activeChat, onMessageReceived) => {
     const [stompClient, setStompClient] = useState(null);
