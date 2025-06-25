@@ -26,9 +26,9 @@ cd amoura-chat-app
 npm install
 ```
 
-### Bước 3: Cấu hình Backend
+### Bước 3: Chạy ứng dụng backend
 
-Chạy backend amooura
+Chạy backend amoura
 
 
 
