@@ -13,7 +13,7 @@
 
 ```bash
 # Clone repository từ GitHub
-git clone https://github.com/your-username/amoura-chat-app.git
+git clone https://github.com/minhph091/amoura-chating-web/
 
 # Di chuyển vào thư mục dự án
 cd amoura-chat-app
@@ -26,9 +26,9 @@ cd amoura-chat-app
 npm install
 ```
 
-### Bước 3: Cấu hình Backend
+### Bước 3: Chạy ứng dụng backend
 
-Chạy backend amooura
+Chạy backend amoura
 
 
 
