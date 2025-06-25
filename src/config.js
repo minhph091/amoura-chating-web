@@ -1,10 +1,10 @@
 // API Configuration
 export const API_CONFIG = {
-    // Base URL for REST API
-    BASE_URL: 'http://localhost:8080/api',
+    // Base URL for REST API (default fallback)
+    BASE_URL: 'http://150.95.109.13:8080/api',
     
     // WebSocket URL
-    WS_URL: 'http://localhost:8080/api/ws',
+    WS_URL: 'http://150.95.109.13:8080/api/ws',
     
     // Timeout settings
     REQUEST_TIMEOUT: 10000,
@@ -20,16 +20,19 @@ export const isProduction = process.env.NODE_ENV === 'production';
 
 // Override URLs for different environments
 if (isProduction) {
-    // Production URLs (replace with your actual production URLs)
-    API_CONFIG.BASE_URL = 'https://your-production-domain.com/api';
-    API_CONFIG.WS_URL = 'https://your-production-domain.com/api/ws';
+    // ✅ Replace with your domain if you have one
+    API_CONFIG.BASE_URL = 'https://your-domain.com/api';
+    API_CONFIG.WS_URL = 'wss://your-domain.com/api/ws'; // wss for secure WebSocket
 }
 
-// Local development overrides (you can change these for local testing)
 if (isDevelopment) {
-    // For testing with different local IP (e.g., mobile testing)
-    // API_CONFIG.BASE_URL = 'http://192.168.1.100:8080/api';
-    // API_CONFIG.WS_URL = 'http://192.168.1.100:8080/api/ws';
+    // ✅ For local testing or emulator
+    // API_CONFIG.BASE_URL = 'http://localhost:8080/api';
+    // API_CONFIG.WS_URL = 'http://localhost:8080/api/ws';
+
+    // ✅ Or use your server IP (for mobile testing)
+    // API_CONFIG.BASE_URL = 'http://150.95.109.13:8080/api';
+    // API_CONFIG.WS_URL = 'http://150.95.109.13:8080/api/ws';
 }
 
-export default API_CONFIG; 
+export default API_CONFIG;
