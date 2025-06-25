@@ -13,7 +13,7 @@
 
 ```bash
 # Clone repository từ GitHub
-git clone https://github.com/your-username/amoura-chat-app.git
+git clone https://github.com/minhph091/amoura-chating-web/
 
 # Di chuyển vào thư mục dự án
 cd amoura-chat-app
