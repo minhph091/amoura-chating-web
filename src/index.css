@@ -1,0 +1,579 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme-aware CSS variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-tertiary: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-tertiary: #6b7280;
+  --border-color: #d1d5db;
+  --scrollbar-track: #f3f4f6;
+  --scrollbar-thumb: #9ca3af;
+  --scrollbar-thumb-hover: #6b7280;
+}
+
+.dark {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-color: #4b5563;
+  --scrollbar-track: #374151;
+  --scrollbar-thumb: #6b7280;
+  --scrollbar-thumb-hover: #9ca3af;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Moon */
+@keyframes moon-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(255, 255, 255, 0.3);
+  }
+}
+
+.moon {
+  position: absolute;
+  top: 10%;
+  right: 15%;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #f0f8ff, #e6f3ff, #ffffff);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2);
+  animation: moon-glow 4s ease-in-out infinite;
+}
+
+/* Clouds */
+@keyframes cloud-float {
+  0%, 100% {
+    transform: translateX(0px);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(20px);
+    opacity: 0.9;
+  }
+}
+
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  animation: cloud-float 8s ease-in-out infinite;
+}
+
+.cloud::before,
+.cloud::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.cloud-1 {
+  top: 15%;
+  left: 5%;
+  width: 80px;
+  height: 30px;
+  animation-delay: 0s;
+}
+
+.cloud-1::before {
+  top: -15px;
+  left: 15px;
+  width: 40px;
+  height: 40px;
+}
+
+.cloud-1::after {
+  top: -10px;
+  right: 15px;
+  width: 35px;
+  height: 35px;
+}
+
+.cloud-2 {
+  top: 25%;
+  right: 10%;
+  width: 60px;
+  height: 25px;
+  animation-delay: 2s;
+}
+
+.cloud-2::before {
+  top: -12px;
+  left: 10px;
+  width: 30px;
+  height: 30px;
+}
+
+.cloud-2::after {
+  top: -8px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+}
+
+.cloud-3 {
+  top: 35%;
+  left: 20%;
+  width: 70px;
+  height: 28px;
+  animation-delay: 4s;
+}
+
+.cloud-3::before {
+  top: -14px;
+  left: 12px;
+  width: 35px;
+  height: 35px;
+}
+
+.cloud-3::after {
+  top: -9px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+}
+
+.cloud-4 {
+  top: 45%;
+  right: 25%;
+  width: 50px;
+  height: 22px;
+  animation-delay: 6s;
+}
+
+.cloud-4::before {
+  top: -10px;
+  left: 8px;
+  width: 25px;
+  height: 25px;
+}
+
+.cloud-4::after {
+  top: -7px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+}
+
+.cloud-5 {
+  top: 55%;
+  left: 35%;
+  width: 65px;
+  height: 26px;
+  animation-delay: 1s;
+}
+
+.cloud-5::before {
+  top: -13px;
+  left: 11px;
+  width: 32px;
+  height: 32px;
+}
+
+.cloud-5::after {
+  top: -8px;
+  right: 11px;
+  width: 28px;
+  height: 28px;
+}
+
+/* Shooting Stars Animations */
+@keyframes shooting-star {
+  0% {
+    transform: translateX(-100px) translateY(0px) rotate(45deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes bright-twinkle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+    box-shadow: 0 0 4px #fff, 0 0 8px #fff;
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+    box-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #fff;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Shooting Stars */
+.shooting-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: linear-gradient(45deg, #fff, #ff69b4, #9370db, #4169e1);
+  border-radius: 50%;
+  box-shadow: 0 0 6px #fff, 0 0 12px #ff69b4, 0 0 18px #9370db;
+  animation: shooting-star 3s linear infinite;
+}
+
+.shooting-star-1 {
+  top: 10%;
+  left: 0;
+  animation-delay: 0s;
+}
+
+.shooting-star-2 {
+  top: 20%;
+  left: 0;
+  animation-delay: 0.5s;
+}
+
+.shooting-star-3 {
+  top: 30%;
+  left: 0;
+  animation-delay: 1s;
+}
+
+.shooting-star-4 {
+  top: 40%;
+  left: 0;
+  animation-delay: 1.5s;
+}
+
+.shooting-star-5 {
+  top: 50%;
+  left: 0;
+  animation-delay: 2s;
+}
+
+.shooting-star-6 {
+  top: 60%;
+  left: 0;
+  animation-delay: 2.5s;
+}
+
+.shooting-star-7 {
+  top: 70%;
+  left: 0;
+  animation-delay: 3s;
+}
+
+.shooting-star-8 {
+  top: 80%;
+  left: 0;
+  animation-delay: 3.5s;
+}
+
+/* Static Twinkling Stars */
+.static-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 3px #fff;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.static-star-1 {
+  top: 12%;
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.static-star-2 {
+  top: 22%;
+  right: 20%;
+  animation-delay: 0.3s;
+}
+
+.static-star-3 {
+  top: 32%;
+  left: 25%;
+  animation-delay: 0.6s;
+}
+
+.static-star-4 {
+  top: 42%;
+  right: 30%;
+  animation-delay: 0.9s;
+}
+
+.static-star-5 {
+  top: 52%;
+  left: 35%;
+  animation-delay: 1.2s;
+}
+
+.static-star-6 {
+  top: 62%;
+  right: 40%;
+  animation-delay: 1.5s;
+}
+
+.static-star-7 {
+  top: 72%;
+  left: 45%;
+  animation-delay: 1.8s;
+}
+
+.static-star-8 {
+  top: 82%;
+  right: 50%;
+  animation-delay: 2.1s;
+}
+
+.static-star-9 {
+  top: 92%;
+  left: 55%;
+  animation-delay: 2.4s;
+}
+
+.static-star-10 {
+  top: 8%;
+  right: 60%;
+  animation-delay: 2.7s;
+}
+
+.static-star-11 {
+  top: 18%;
+  left: 65%;
+  animation-delay: 3s;
+}
+
+.static-star-12 {
+  top: 28%;
+  right: 70%;
+  animation-delay: 3.3s;
+}
+
+.static-star-13 {
+  top: 38%;
+  left: 75%;
+  animation-delay: 3.6s;
+}
+
+.static-star-14 {
+  top: 48%;
+  right: 80%;
+  animation-delay: 3.9s;
+}
+
+.static-star-15 {
+  top: 58%;
+  left: 85%;
+  animation-delay: 4.2s;
+}
+
+.static-star-16 {
+  top: 68%;
+  right: 85%;
+  animation-delay: 4.5s;
+}
+
+.static-star-17 {
+  top: 78%;
+  left: 90%;
+  animation-delay: 4.8s;
+}
+
+.static-star-18 {
+  top: 88%;
+  right: 90%;
+  animation-delay: 5.1s;
+}
+
+.static-star-19 {
+  top: 98%;
+  left: 95%;
+  animation-delay: 5.4s;
+}
+
+.static-star-20 {
+  top: 6%;
+  right: 95%;
+  animation-delay: 5.7s;
+}
+
+.static-star-21 {
+  top: 16%;
+  left: 10%;
+  animation-delay: 6s;
+}
+
+.static-star-22 {
+  top: 26%;
+  right: 15%;
+  animation-delay: 6.3s;
+}
+
+.static-star-23 {
+  top: 36%;
+  left: 20%;
+  animation-delay: 6.6s;
+}
+
+.static-star-24 {
+  top: 46%;
+  right: 25%;
+  animation-delay: 6.9s;
+}
+
+.static-star-25 {
+  top: 56%;
+  left: 30%;
+  animation-delay: 7.2s;
+}
+
+/* Bright Stars */
+.bright-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px #fff, 0 0 8px #fff;
+  animation: bright-twinkle 2s ease-in-out infinite;
+}
+
+.bright-star-1 {
+  top: 14%;
+  left: 18%;
+  animation-delay: 0s;
+}
+
+.bright-star-2 {
+  top: 24%;
+  right: 22%;
+  animation-delay: 0.5s;
+}
+
+.bright-star-3 {
+  top: 34%;
+  left: 28%;
+  animation-delay: 1s;
+}
+
+.bright-star-4 {
+  top: 44%;
+  right: 32%;
+  animation-delay: 1.5s;
+}
+
+.bright-star-5 {
+  top: 54%;
+  left: 38%;
+  animation-delay: 2s;
+}
+
+.bright-star-6 {
+  top: 64%;
+  right: 42%;
+  animation-delay: 2.5s;
+}
+
+.bright-star-7 {
+  top: 74%;
+  left: 48%;
+  animation-delay: 3s;
+}
+
+.bright-star-8 {
+  top: 84%;
+  right: 52%;
+  animation-delay: 3.5s;
+}
+
+/* Custom animations for EmptyChatState */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle 2s ease-in-out infinite;
+}
