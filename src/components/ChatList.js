@@ -77,7 +77,7 @@ const ChatList = React.memo(({ chats, onSelectChat, activeChatId, searchTerm, on
                                     ⋯
                                 </button>
                             </div>
-                            <div className={`absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-xl shadow-2xl py-2 z-20 border border-pink-200/50 dark:border-purple-700/50 ${isMenuOpen ? 'block' : 'hidden'} transition-all duration-300`}>
+                            <div className={`absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-xl shadow-2xl py-2 z-50 border border-pink-200/50 dark:border-purple-700/50 ${isMenuOpen ? 'block' : 'hidden'} transition-all duration-300`}>
                                 <button onClick={() => { onShowProfile(); setIsMenuOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 dark:hover:from-purple-900/50 dark:hover:to-indigo-900/50 transition-all duration-200 rounded-lg mx-2">
                                     <User size={16} className="mr-2 text-pink-500" /> 
                                     Hồ sơ
