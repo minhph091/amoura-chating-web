@@ -22,6 +22,48 @@ export const useMessages = (apiRequest, currentUser, activeChat) => {
             return;
         }
         
+        // Handle message recall notification
+        if (wsMessage.type === 'MESSAGE_RECALL' || wsMessage.recalled === true || wsMessage.action === 'RECALL') {
+            console.log('🔄 Processing message recall notification:', {
+                type: wsMessage.type,
+                recalled: wsMessage.recalled,
+                action: wsMessage.action,
+                id: wsMessage.id,
+                messageId: wsMessage.messageId,
+                recalledMessageId: wsMessage.recalledMessageId,
+                payload: wsMessage.payload,
+                data: wsMessage.data,
+                content: wsMessage.content
+            });
+            
+            // Handle different message ID formats that server might send
+            let messageId = wsMessage.id || wsMessage.messageId || wsMessage.recalledMessageId || wsMessage.payload?.messageId || wsMessage.data?.messageId;
+            
+            // If no direct message ID, try to extract from content if it's a JSON string
+            if (!messageId && wsMessage.content) {
+                try {
+                    const contentData = JSON.parse(wsMessage.content);
+                    messageId = contentData.messageId || contentData.id;
+                } catch (e) {
+                    // Content is not JSON, ignore
+                }
+            }
+            
+            if (messageId) {
+                setMessages(prev => 
+                    prev.map(msg => 
+                        msg.id === messageId 
+                            ? { ...msg, recalled: true }
+                            : msg
+                    )
+                );
+                console.log('✅ Message recalled successfully:', messageId);
+            } else {
+                console.warn('⚠️ Message recall notification missing message ID:', wsMessage);
+            }
+            return;
+        }
+        
         // Only process messages from other users (not from current user)
         if (wsMessage.senderId === currentUser?.id) {
             console.log('⚠️ Message from current user, skipping (handled by HTTP response)');
