@@ -34,6 +34,74 @@ export const useChatRooms = (apiRequest, currentUser) => {
         });
     }, []);
 
+    // Handle match notification and create new chat room
+    const handleMatchNotification = useCallback(async (matchData) => {
+        try {
+            console.log('💕 Processing match notification:', matchData);
+            
+            // Extract match information
+            const matchId = matchData.relatedEntityId;
+            const matchType = matchData.relatedEntityType;
+            
+            if (matchType !== 'MATCH' || !matchId) {
+                console.log('⚠️ Invalid match data, skipping chat room creation');
+                return;
+            }
+
+            // Fetch the new chat room details
+            console.log('🔄 Fetching new chat room for match:', matchId);
+            const newChatRoom = await apiRequest(`/matches/${matchId}/chat-room`);
+            
+            if (newChatRoom && newChatRoom.id) {
+                console.log('✅ New chat room fetched:', newChatRoom);
+                
+                // Add the new chat room to the beginning of the list
+                setChats(prevChats => {
+                    // Check if chat room already exists
+                    const existingChat = prevChats.find(c => Number(c.id) === Number(newChatRoom.id));
+                    if (existingChat) {
+                        console.log('⚠️ Chat room already exists, updating instead');
+                        return prevChats.map(c => 
+                            Number(c.id) === Number(newChatRoom.id) 
+                                ? { ...c, ...newChatRoom }
+                                : c
+                        );
+                    }
+                    
+                    // Add new chat room at the beginning
+                    const updatedChats = [newChatRoom, ...prevChats];
+                    console.log('✅ Added new chat room to list:', updatedChats.length, 'total chats');
+                    return updatedChats;
+                });
+
+                // Show success notification
+                const matchedUsername = matchData.content?.split(' have matched')[0]?.split('You and ')[1] || 'someone';
+                console.log(`🎉 Successfully created chat room with ${matchedUsername}!`);
+                
+                // Optional: Auto-select the new chat room
+                // setActiveChat(newChatRoom);
+                
+            } else {
+                console.error('❌ Failed to fetch new chat room details');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error processing match notification:', error);
+            
+            // Fallback: try to fetch all chat rooms to get the latest
+            try {
+                console.log('🔄 Fallback: fetching all chat rooms...');
+                const allRooms = await apiRequest('/chat/rooms');
+                if (Array.isArray(allRooms)) {
+                    setChats(allRooms.sort((a, b) => new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0)));
+                    console.log('✅ Updated chat list via fallback');
+                }
+            } catch (fallbackError) {
+                console.error('❌ Fallback also failed:', fallbackError);
+            }
+        }
+    }, [apiRequest]);
+
     // Fetch chat rooms
     const fetchChatRooms = useCallback(async () => {
         try {
@@ -82,6 +150,7 @@ export const useChatRooms = (apiRequest, currentUser) => {
         setChats,
         setActiveChat,
         handleWebSocketMessageForChats,
+        handleMatchNotification,
         fetchChatRooms,
         handleSelectChat,
         updateChatUnreadCount

@@ -5,9 +5,11 @@ import ChatArea from './components/ChatArea';
 import ChatWindow from './components/ChatWindow';
 import MobileChatHeader from './components/MobileChatHeader';
 import AppModals from './components/AppModals';
+import MatchNotification from './components/MatchNotification';
+import TypingIndicator from './components/TypingIndicator';
 
 // Custom hooks
-import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
+import { useAuth, useChat, useWebSocket, useProfile, useTheme, useUserStatus } from './hooks';
 
         // --- Main App Component ---
         function App() {
@@ -22,15 +24,16 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
         scrollRestoreInfo,
         setChats,
         setActiveChat,
+        setMessages,
         handleWebSocketMessage,
+        handleMatchNotification,
         fetchChatRooms,
         handleSelectChat,
         fetchMoreMessages,
         handleSendMessage,
         handleUploadImage,
         handleRecallMessage,
-        handleDeleteMessageForMe,
-        setMessages
+        handleDeleteMessageForMe
     } = useChat(apiRequest, currentUser);
     
     const {
@@ -51,17 +54,154 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
     // Local state
             const [searchTerm, setSearchTerm] = useState('');
             const [isMobileView, setIsMobileView] = useState(false);
+            const [matchNotification, setMatchNotification] = useState(null);
+            const [typingUsers, setTypingUsers] = useState(new Map()); // Track typing users per chat
             const messagesContainerRef = useRef(null); 
             const chatWindowRef = useRef(null);
             const mobileChatAreaRef = useRef(null);
 
+    // Handle match notification with UI
+    const handleMatchNotificationWithUI = useCallback(async (matchData) => {
+        console.log('💕 Match notification received with UI:', matchData);
+        
+        // Show notification component
+        setMatchNotification(matchData);
+        
+        // Also process the match (add chat room)
+        await handleMatchNotification(matchData);
+    }, [handleMatchNotification]);
+
+    // Handle close match notification
+    const handleCloseMatchNotification = useCallback(() => {
+        setMatchNotification(null);
+    }, []);
+
+    // Wrapper for handleSelectChat to focus input after chat selection
+    const handleSelectChatWrapper = useCallback(async (chat) => {
+        await handleSelectChat(chat);
+        
+        // Focus input after a short delay to ensure DOM is updated
+        setTimeout(() => {
+            if (isMobileView) {
+                // Mobile view - focus ChatArea
+                if (mobileChatAreaRef.current) {
+                    mobileChatAreaRef.current.focusInput();
+                    console.log('🎯 Focused input after selecting chat (mobile):', chat.id);
+                }
+            } else {
+                // Desktop view - focus ChatWindow
+                if (chatWindowRef.current) {
+                    chatWindowRef.current.focusInput();
+                    console.log('🎯 Focused input after selecting chat (desktop):', chat.id);
+                }
+            }
+        }, 100);
+    }, [handleSelectChat, isMobileView]);
+
+    // Handle open chat from match notification
+    const handleOpenChatFromMatch = useCallback((matchData) => {
+        // Find the chat room that was just created
+        const newChat = chats.find(chat => {
+            // This is a simplified logic - you might need to adjust based on your API response
+            return chat.user1Id !== currentUser.id && chat.user2Id !== currentUser.id;
+        });
+        
+        if (newChat) {
+            handleSelectChatWrapper(newChat);
+        }
+    }, [chats, currentUser, handleSelectChatWrapper]);
+
+    // Handle typing events from WebSocket
+    const handleTypingEvent = useCallback((data) => {
+        console.log('📨 [TYPING] Received typing event from WebSocket:', data);
+        
+        if (data.type === 'TYPING') {
+            const { chatRoomId, senderId, content } = data;
+            const isTyping = content === 'true';
+            
+            console.log('🔄 [TYPING] Processing typing event:', {
+                chatRoomId,
+                senderId,
+                content,
+                isTyping,
+                currentUserId: currentUser?.id,
+                isFromCurrentUser: senderId === currentUser?.id
+            });
+            
+            setTypingUsers(prev => {
+                const newMap = new Map(prev);
+                if (isTyping) {
+                    // Add typing user
+                    const chatTypingUsers = new Set(newMap.get(chatRoomId) || []);
+                    chatTypingUsers.add(senderId);
+                    newMap.set(chatRoomId, chatTypingUsers);
+                    console.log('➕ [TYPING] Added typing user:', {
+                        chatRoomId,
+                        senderId,
+                        totalTypingUsers: chatTypingUsers.size
+                    });
+                } else {
+                    // Remove typing user
+                    const chatTypingUsers = new Set(newMap.get(chatRoomId) || []);
+                    chatTypingUsers.delete(senderId);
+                    if (chatTypingUsers.size === 0) {
+                        newMap.delete(chatRoomId);
+                        console.log('🗑️ [TYPING] Removed all typing users for chat:', chatRoomId);
+                    } else {
+                        newMap.set(chatRoomId, chatTypingUsers);
+                        console.log('➖ [TYPING] Removed typing user:', {
+                            chatRoomId,
+                            senderId,
+                            remainingTypingUsers: chatTypingUsers.size
+                        });
+                    }
+                }
+                return newMap;
+            });
+        } else {
+            console.log('ℹ️ [TYPING] Received non-typing event:', data.type);
+        }
+    }, [currentUser]);
+
+    // Enhanced WebSocket message handler to include typing events
+    const handleWebSocketMessageWithTyping = useCallback((data) => {
+        console.log('📨 [WS] Received WebSocket message:', {
+            type: data.type,
+            chatRoomId: data.chatRoomId,
+            senderId: data.senderId,
+            messageId: data.id
+        });
+        
+        // Handle typing events
+        if (data.type === 'TYPING') {
+            console.log('⌨️ [WS] Routing to typing handler');
+            handleTypingEvent(data);
+        } else {
+            // Handle regular messages
+            console.log('💬 [WS] Routing to message handler');
+            handleWebSocketMessage(data);
+        }
+    }, [handleWebSocketMessage, handleTypingEvent]);
+
     // WebSocket hook
-    const { stompClient, subscribeToChats, cleanupSubscriptions } = useWebSocket(
+    const { stompClient, subscribeToChats, cleanupSubscriptions, sendTypingEvent } = useWebSocket(
         authToken, 
         currentUser, 
         activeChat, 
-        handleWebSocketMessage
+        handleWebSocketMessageWithTyping,
+        handleMatchNotificationWithUI
     );
+
+    // User status hook
+    const {
+        onlineUsers,
+        userStatuses,
+        isUserOnline,
+        getUserStatus,
+        formatLastSeen,
+        fetchInitialUserStatuses,
+        resetUserStatuses
+    } = useUserStatus(stompClient, currentUser, activeChat, apiRequest, chats);
 
     // Subscribe to chat topics when chats change
                 useEffect(() => {
@@ -118,28 +258,6 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
     // Handlers
     const handleBackToList = () => setActiveChat(null);
     
-    // Wrapper for handleSelectChat to focus input after chat selection
-    const handleSelectChatWrapper = useCallback(async (chat) => {
-        await handleSelectChat(chat);
-        
-        // Focus input after a short delay to ensure DOM is updated
-        setTimeout(() => {
-            if (isMobileView) {
-                // Mobile view - focus ChatArea
-                if (mobileChatAreaRef.current) {
-                    mobileChatAreaRef.current.focusInput();
-                    console.log('🎯 Focused input after selecting chat (mobile):', chat.id);
-                }
-            } else {
-                // Desktop view - focus ChatWindow
-                if (chatWindowRef.current) {
-                    chatWindowRef.current.focusInput();
-                    console.log('🎯 Focused input after selecting chat (desktop):', chat.id);
-                }
-            }
-        }, 100);
-    }, [handleSelectChat, isMobileView]);
-    
     const handleSendMessageWrapper = useCallback((chatRoomId, content, messageType = 'TEXT', imageUrl = null) => {
         return handleSendMessage(chatRoomId, content, messageType, imageUrl, stompClient);
     }, [handleSendMessage, stompClient]);
@@ -150,207 +268,25 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
         setChats([]);
         setActiveChat(null);
         cleanupSubscriptions();
-    }, [handleLogout, setChats, setActiveChat, cleanupSubscriptions]);
+        resetUserStatuses(); // Reset user statuses on logout
+    }, [handleLogout, setChats, setActiveChat, cleanupSubscriptions, resetUserStatuses]);
 
-    // Test WebSocket connection (for debugging)
-    const testWebSocketConnection = useCallback(() => {
-        console.log('🧪 Testing WebSocket connection...');
-        console.log('🔍 StompClient:', stompClient);
-        console.log('🔍 Is connected:', stompClient?.connected);
-        console.log('🔍 Current chats:', chats);
-        console.log('🔍 Active chat:', activeChat);
-        console.log('🔍 Current messages:', messages.length);
+    // Handle typing indicator
+    const handleTypingChange = useCallback((chatId, isTyping) => {
+        console.log('⌨️ [TYPING] handleTypingChange called:', {
+            chatId,
+            isTyping,
+            hasSendTypingEvent: !!sendTypingEvent,
+            currentUser: currentUser?.id
+        });
         
-        if (stompClient && stompClient.connected) {
-            console.log('✅ WebSocket is connected and ready');
+        if (sendTypingEvent) {
+            console.log('📤 [TYPING] Calling sendTypingEvent...');
+            sendTypingEvent(chatId, isTyping);
         } else {
-            console.log('❌ WebSocket is not connected');
+            console.warn('⚠️ [TYPING] sendTypingEvent not available');
         }
-    }, [stompClient, chats, activeChat, messages]);
-
-    // Test adding a message (for debugging)
-    const testAddMessage = useCallback(() => {
-        if (!activeChat) {
-            console.log('❌ No active chat to test with');
-            return;
-        }
-        
-        console.log('🧪 Testing message addition...');
-        console.log('🔍 Active chat details:', {
-            id: activeChat.id,
-            type: typeof activeChat.id,
-            user1Id: activeChat.user1Id,
-            user2Id: activeChat.user2Id
-        });
-        
-        const testMessage = {
-            id: `test_${Date.now()}`,
-            chatRoomId: activeChat.id,
-            senderId: currentUser.id + 1, // Different user
-            senderName: 'Test User',
-            content: `Test message at ${new Date().toLocaleTimeString()}`,
-            messageType: 'TEXT',
-            createdAt: new Date().toISOString()
-        };
-        
-        console.log('🔍 Test message:', testMessage);
-        console.log('🔍 Current messages before test:', messages.length);
-        handleWebSocketMessage(testMessage);
-    }, [activeChat, currentUser, handleWebSocketMessage, messages.length]);
-
-    // Test direct message state update (for debugging)
-    const testDirectMessageUpdate = useCallback(() => {
-        if (!activeChat) {
-            console.log('❌ No active chat to test with');
-                    return;
-                }
-                
-        console.log('🧪 Testing direct message state update...');
-        console.log('🔍 Current messages count:', messages.length);
-        
-        // Directly update messages state to test if the issue is in WebSocket handling
-        const testMessage = {
-            id: `direct_test_${Date.now()}`,
-            chatRoomId: activeChat.id,
-            senderId: currentUser.id + 1,
-            senderName: 'Direct Test User',
-            content: `Direct test message at ${new Date().toLocaleTimeString()}`,
-            messageType: 'TEXT',
-            createdAt: new Date().toISOString()
-        };
-        
-        console.log('🔍 Direct test message:', testMessage);
-        
-        // This will bypass WebSocket handling and directly test message state
-        setMessages(prev => {
-            console.log('🔍 Previous messages count:', prev.length);
-            const newMessages = [...prev, testMessage];
-            console.log('🔍 New messages count:', newMessages.length);
-            return newMessages;
-        });
-    }, [activeChat, currentUser, messages.length, setMessages]);
-
-    // Test sending a message (for debugging)
-    const testSendMessage = useCallback(() => {
-        if (!activeChat) {
-            console.log('❌ No active chat to test with');
-            return;
-        }
-        
-        console.log('🧪 Testing send message...');
-        console.log('🔍 Current messages count:', messages.length);
-        
-        const testContent = `Test send message at ${new Date().toLocaleTimeString()}`;
-        console.log('🔍 Test content:', testContent);
-        
-        // Use the actual send message function
-        handleSendMessageWrapper(activeChat.id, testContent, 'TEXT');
-    }, [activeChat, currentUser, messages.length, handleSendMessageWrapper]);
-
-    // Test infinite scroll (for debugging)
-    const testInfiniteScroll = useCallback(() => {
-        if (!activeChat) {
-            console.log('❌ No active chat to test with');
-            return;
-        }
-        
-        console.log('🧪 Testing infinite scroll...');
-        console.log('🔍 Current state:', {
-            messagesCount: messages.length,
-            hasMoreMessages,
-            isLoadingMessages,
-            cursor: 'Check useMessages hook for cursor'
-        });
-        
-        // Manually trigger fetchMoreMessages
-        console.log('🚀 Manually triggering fetchMoreMessages...');
-        fetchMoreMessages(activeChat.id);
-    }, [activeChat, messages.length, hasMoreMessages, isLoadingMessages, fetchMoreMessages]);
-
-    // Test scroll position and infinite scroll (for debugging)
-    const testScrollPosition = useCallback(() => {
-        if (!activeChat) {
-            console.log('❌ No active chat to test with');
-            return;
-        }
-        
-        const container = messagesContainerRef.current;
-        if (!container) {
-            console.log('❌ No messages container found');
-            return;
-        }
-        
-        console.log('🧪 Testing scroll position...');
-        console.log('🔍 Scroll info:', {
-            scrollTop: container.scrollTop,
-            scrollHeight: container.scrollHeight,
-            clientHeight: container.clientHeight,
-            isAtTop: container.scrollTop <= 100
-        });
-        
-        // If near top, trigger fetch manually
-        if (container.scrollTop <= 100 && hasMoreMessages && !isLoadingMessages) {
-            console.log('🚀 Near top, manually triggering fetchMoreMessages...');
-            fetchMoreMessages(activeChat.id);
-        } else {
-            console.log('⚠️ Not near top or cannot fetch:', {
-                nearTop: container.scrollTop <= 100,
-                hasMoreMessages,
-                isLoadingMessages
-            });
-        }
-    }, [activeChat, hasMoreMessages, isLoadingMessages, fetchMoreMessages]);
-
-    // Test force load older messages (for debugging)
-    const testForceLoadOlder = useCallback(() => {
-        if (!activeChat) {
-            console.log('❌ No active chat to test with');
-            return;
-        }
-        
-        console.log('🧪 Force loading older messages...');
-        console.log('🔍 Current state:', {
-            messagesCount: messages.length,
-            hasMoreMessages,
-            isLoadingMessages,
-            oldestMessageId: messages.length > 0 ? messages[0].id : null,
-            oldestMessageTime: messages.length > 0 ? new Date(messages[0].createdAt).toLocaleTimeString() : null
-        });
-        
-        // Force set hasMoreMessages to true and trigger fetch
-        console.log('🚀 Forcing hasMoreMessages to true and triggering fetch...');
-        fetchMoreMessages(activeChat.id);
-    }, [activeChat, messages, hasMoreMessages, isLoadingMessages, fetchMoreMessages]);
-
-    // Add test functions to window for debugging
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            window.testWebSocket = testWebSocketConnection;
-            window.testAddMessage = testAddMessage;
-            window.testDirectMessageUpdate = testDirectMessageUpdate;
-            window.testSendMessage = testSendMessage;
-            window.testInfiniteScroll = testInfiniteScroll;
-            window.testScrollPosition = testScrollPosition;
-            window.testForceLoadOlder = testForceLoadOlder;
-            console.log('🧪 Test functions added:');
-            console.log('  - window.testWebSocket() - Test WebSocket connection');
-            console.log('  - window.testAddMessage() - Test adding a message');
-            console.log('  - window.testDirectMessageUpdate() - Test direct message state update');
-            console.log('  - window.testSendMessage() - Test sending a message');
-            console.log('  - window.testInfiniteScroll() - Test infinite scroll');
-            console.log('  - window.testScrollPosition() - Test scroll position and trigger');
-            console.log('  - window.testForceLoadOlder() - Force load older messages');
-        }
-    }, [testWebSocketConnection, testAddMessage, testDirectMessageUpdate, testSendMessage, testInfiniteScroll, testScrollPosition, testForceLoadOlder]);
-
-    // Log messages changes for debugging
-    useEffect(() => {
-        console.log('📱 App.js messages state changed:', {
-            messagesCount: messages.length,
-            activeChatId: activeChat?.id,
-            messages: messages.map(m => ({ id: m.id, tempId: m.tempId, content: m.content?.substring(0, 30), senderId: m.senderId }))
-        });
-    }, [messages, activeChat?.id]);
+    }, [sendTypingEvent, currentUser]);
 
     // Show loading screen while checking authentication
     if (isLoading) {
@@ -370,6 +306,15 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
 
             return (
                 <>
+            {/* Match Notification */}
+            {matchNotification && (
+                <MatchNotification
+                    matchData={matchNotification}
+                    onClose={handleCloseMatchNotification}
+                    onOpenChat={handleOpenChatFromMatch}
+                />
+            )}
+            
             {/* Modals */}
             <AppModals
                 viewedProfile={viewedProfile}
@@ -379,6 +324,10 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
                 onCloseSettings={handleCloseSettings}
                 onCloseZoomedImage={handleCloseZoomedImage}
                 onZoomImage={handleZoomImage}
+                isUserOnline={isUserOnline}
+                getUserStatus={getUserStatus}
+                formatLastSeen={formatLastSeen}
+                currentUser={currentUser}
             />
             
             {/* Mobile View */}
@@ -397,6 +346,9 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
                             onShowSettings={handleShowSettings} 
                             isDarkMode={isDarkMode}
                             onToggleTheme={toggleTheme}
+                            isUserOnline={isUserOnline}
+                            getUserStatus={getUserStatus}
+                            formatLastSeen={formatLastSeen}
                         />
                     ) : (
                         <div className="h-full w-full flex flex-col">
@@ -404,6 +356,9 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
                                 activeChat={activeChat}
                                 currentUser={currentUser}
                                 onBackToList={handleBackToList}
+                                isUserOnline={isUserOnline}
+                                getUserStatus={getUserStatus}
+                                formatLastSeen={formatLastSeen}
                             />
                             <ChatArea 
                                 ref={mobileChatAreaRef}
@@ -419,6 +374,8 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
                                 containerRef={messagesContainerRef} 
                                 hasMoreMessages={hasMoreMessages} 
                                 isLoadingMessages={isLoadingMessages} 
+                                typingUsers={typingUsers.get(activeChat?.id) || new Set()}
+                                onTypingChange={handleTypingChange}
                             />
                                 </div>
                             )}
@@ -438,6 +395,9 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
                         onShowSettings={handleShowSettings} 
                         isDarkMode={isDarkMode}
                         onToggleTheme={toggleTheme}
+                        isUserOnline={isUserOnline}
+                        getUserStatus={getUserStatus}
+                        formatLastSeen={formatLastSeen}
                     />
                     <ChatWindow 
                         ref={chatWindowRef}
@@ -455,6 +415,11 @@ import { useAuth, useChat, useWebSocket, useProfile, useTheme } from './hooks';
                         hasMoreMessages={hasMoreMessages} 
                         isLoadingMessages={isLoadingMessages} 
                         isDarkMode={isDarkMode}
+                        isUserOnline={isUserOnline}
+                        getUserStatus={getUserStatus}
+                        formatLastSeen={formatLastSeen}
+                        typingUsers={typingUsers.get(activeChat?.id) || new Set()}
+                        onTypingChange={handleTypingChange}
                     />
                         </div>
                     )}

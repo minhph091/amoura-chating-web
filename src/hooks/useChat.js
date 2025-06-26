@@ -10,6 +10,7 @@ export const useChat = (apiRequest, currentUser) => {
         setChats,
         setActiveChat,
         handleWebSocketMessageForChats,
+        handleMatchNotification,
         fetchChatRooms,
         handleSelectChat: handleSelectChatRoom,
         updateChatUnreadCount
@@ -71,6 +72,7 @@ export const useChat = (apiRequest, currentUser) => {
         setActiveChat,
         setMessages,
         handleWebSocketMessage,
+        handleMatchNotification,
         fetchChatRooms,
         handleSelectChat,
         fetchMoreMessages,

@@ -1,15 +1,19 @@
 import React from 'react';
 import { formatName } from '../utils';
 
-const ChatListItem = React.memo(({ chat, onClick, isActive, currentUserId, onZoomImage }) => {
+const ChatListItem = React.memo(({ chat, onClick, isActive, currentUserId, onZoomImage, isUserOnline, getUserStatus, formatLastSeen }) => {
     // Early return if chat is undefined or null
     if (!chat) {
         return null;
     }
 
     const otherUser = chat.user1Id === currentUserId 
-        ? { name: chat.user2Name, avatar: chat.user2Avatar }
-        : { name: chat.user1Name, avatar: chat.user1Avatar };
+        ? { id: chat.user2Id, name: chat.user2Name, avatar: chat.user2Avatar }
+        : { id: chat.user1Id, name: chat.user1Name, avatar: chat.user1Avatar };
+    
+    // Get user status
+    const userStatus = getUserStatus(otherUser.id);
+    const isOnline = isUserOnline(otherUser.id);
     
     // Safe date handling to prevent "Invalid Date"
     const getDisplayTime = () => {
@@ -74,7 +78,11 @@ const ChatListItem = React.memo(({ chat, onClick, isActive, currentUserId, onZoo
                     />
                     
                     {/* Online indicator */}
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white dark:border-gray-800 rounded-full transition-all duration-300 ${
+                        isOnline 
+                            ? 'bg-green-500 animate-pulse' 
+                            : 'bg-gray-400'
+                    }`}></div>
                 </div>
                 
                 {/* Chat info */}
@@ -97,19 +105,35 @@ const ChatListItem = React.memo(({ chat, onClick, isActive, currentUserId, onZoo
                     </div>
                     
                     <div className="flex justify-between items-center">
-                        <p className={`text-xs truncate transition-colors duration-300 ${
-                            chat.lastMessage?.recalled 
-                                ? 'italic text-gray-400 dark:text-gray-500' 
-                                : isActive
-                                    ? 'text-gray-600 dark:text-gray-300'
-                                    : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
-                        }`}>
-                            {lastMessageText || 'Chưa có tin nhắn'}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                            <p className={`text-xs truncate transition-colors duration-300 ${
+                                chat.lastMessage?.recalled 
+                                    ? 'italic text-gray-400 dark:text-gray-500' 
+                                    : isActive
+                                        ? 'text-gray-600 dark:text-gray-300'
+                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                            }`}>
+                                {lastMessageText || 'Chưa có tin nhắn'}
+                            </p>
+                            
+                            {/* Online status text */}
+                            <p className={`text-xs transition-colors duration-300 ${
+                                isOnline 
+                                    ? 'text-green-600 dark:text-green-400' 
+                                    : 'text-gray-400 dark:text-gray-500'
+                            }`}>
+                                {isOnline 
+                                    ? 'Đang hoạt động' 
+                                    : userStatus.lastSeen 
+                                        ? `Hoạt động ${formatLastSeen(userStatus.lastSeen)}`
+                                        : 'Không hoạt động'
+                                }
+                            </p>
+                        </div>
                         
                         {/* Unread count badge */}
                         {chat.unreadCount > 0 && (
-                            <div className="relative">
+                            <div className="relative ml-2">
                                 <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full blur-sm opacity-60 animate-pulse"></div>
                                 <span className="relative bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center shadow-lg">
                                     {chat.unreadCount > 99 ? '99+' : chat.unreadCount}

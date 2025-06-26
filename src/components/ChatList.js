@@ -4,7 +4,7 @@ import { User, Settings, LogOut, Search, Heart } from './Icons';
 import ChatListItem from './ChatListItem';
 import ThemeToggle from './ThemeToggle';
 
-const ChatList = React.memo(({ chats, onSelectChat, activeChatId, searchTerm, onSearchChange, currentUser, onLogout, onShowProfile, onShowSettings, isDarkMode, onToggleTheme, onZoomImage }) => {
+const ChatList = React.memo(({ chats, onSelectChat, activeChatId, searchTerm, onSearchChange, currentUser, onLogout, onShowProfile, onShowSettings, isDarkMode, onToggleTheme, onZoomImage, isUserOnline, getUserStatus, formatLastSeen }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
     
@@ -122,6 +122,9 @@ const ChatList = React.memo(({ chats, onSelectChat, activeChatId, searchTerm, on
                             isActive={activeChatId === chat.id} 
                             currentUserId={currentUser.id}
                             onZoomImage={onZoomImage}
+                            isUserOnline={isUserOnline}
+                            getUserStatus={getUserStatus}
+                            formatLastSeen={formatLastSeen}
                         />
                     ) : 
                     <div className="flex flex-col items-center justify-center h-full p-8 text-center">

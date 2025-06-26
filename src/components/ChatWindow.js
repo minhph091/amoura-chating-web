@@ -4,7 +4,7 @@ import { MessageSquare, Phone, Video, Info, Heart } from './Icons';
 import ChatArea from './ChatArea';
 import EmptyChatState from './EmptyChatState';
 
-const ChatWindow = forwardRef(({ chat, messages, currentUser, onSendMessage, onUploadImage, fetchMoreMessages, onRecall, onDelete, onZoomImage, onShowProfile, messagesContainerRef, hasMoreMessages, isLoadingMessages, isDarkMode }, ref) => {
+const ChatWindow = forwardRef(({ chat, messages, currentUser, onSendMessage, onUploadImage, fetchMoreMessages, onRecall, onDelete, onZoomImage, onShowProfile, messagesContainerRef, hasMoreMessages, isLoadingMessages, isDarkMode, isUserOnline, getUserStatus, formatLastSeen, typingUsers, onTypingChange }, ref) => {
     const chatAreaRef = useRef(null);
 
     // Expose focus method to parent component
@@ -25,6 +25,10 @@ const ChatWindow = forwardRef(({ chat, messages, currentUser, onSendMessage, onU
         ? { id: chat.user2Id, name: chat.user2Name, avatar: chat.user2Avatar } 
         : { id: chat.user1Id, name: chat.user1Name, avatar: chat.user1Avatar };
     
+    // Get user status
+    const userStatus = getUserStatus(otherUser.id);
+    const isOnline = isUserOnline(otherUser.id);
+    
     return (
         <div className="flex-1 flex flex-col bg-gradient-to-br from-white/90 via-pink-50/30 to-purple-50/20 dark:from-gray-900/90 dark:via-purple-900/30 dark:to-indigo-900/20 h-full transition-all duration-500">
             {/* Header */}
@@ -44,15 +48,34 @@ const ChatWindow = forwardRef(({ chat, messages, currentUser, onSendMessage, onU
                             className="relative w-10 h-10 rounded-full object-cover ring-2 ring-pink-200/50 dark:ring-purple-700/50 hover:ring-pink-400 dark:hover:ring-purple-400 transition-all duration-300 shadow-lg cursor-pointer hover:scale-105" 
                             onError={(e) => e.target.src='https://placehold.co/100x100/CCCCCC/FFFFFF?text=E'}
                         />
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white dark:border-gray-800 rounded-full transition-all duration-300 ${
+                            isOnline 
+                                ? 'bg-green-500 animate-pulse' 
+                                : 'bg-gray-400'
+                        }`}></div>
                     </div>
                     <div className="min-w-0 ml-3">
                         <h3 className="font-semibold text-lg truncate text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
                             {formatName(otherUser.name)}
                         </h3>
                         <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <p className="text-sm text-green-600 dark:text-green-400 font-medium">Đang hoạt động</p>
+                            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                isOnline 
+                                    ? 'bg-green-500 animate-pulse' 
+                                    : 'bg-gray-400'
+                            }`}></div>
+                            <p className={`text-sm font-medium transition-colors duration-300 ${
+                                isOnline 
+                                    ? 'text-green-600 dark:text-green-400' 
+                                    : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                                {isOnline 
+                                    ? 'Đang hoạt động' 
+                                    : userStatus.lastSeen 
+                                        ? `Hoạt động ${formatLastSeen(userStatus.lastSeen)}`
+                                        : 'Không hoạt động'
+                                }
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -86,6 +109,8 @@ const ChatWindow = forwardRef(({ chat, messages, currentUser, onSendMessage, onU
                 containerRef={messagesContainerRef}
                 hasMoreMessages={hasMoreMessages}
                 isLoadingMessages={isLoadingMessages}
+                typingUsers={typingUsers}
+                onTypingChange={onTypingChange}
             />
         </div>
     );

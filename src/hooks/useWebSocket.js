@@ -4,16 +4,21 @@ import { API_CONFIG } from '../config';
 
 const WS_URL = API_CONFIG.WS_URL;
 
-export const useWebSocket = (authToken, currentUser, activeChat, onMessageReceived) => {
+export const useWebSocket = (authToken, currentUser, activeChat, onMessageReceived, onMatchNotification) => {
     const [stompClient, setStompClient] = useState(null);
     const [isStompReady, setIsStompReady] = useState(false);
     const subscriptions = useRef(new Map());
     const onMessageReceivedRef = useRef(onMessageReceived);
+    const onMatchNotificationRef = useRef(onMatchNotification);
 
-    // Update the ref when onMessageReceived changes
+    // Update the refs when callbacks change
     useEffect(() => {
         onMessageReceivedRef.current = onMessageReceived;
     }, [onMessageReceived]);
+
+    useEffect(() => {
+        onMatchNotificationRef.current = onMatchNotification;
+    }, [onMatchNotification]);
 
     // Check if StompJS is loaded
     useEffect(() => {
@@ -78,30 +83,66 @@ export const useWebSocket = (authToken, currentUser, activeChat, onMessageReceiv
         };
     }, [isStompReady, authToken, currentUser]);
 
-    // Subscribe to personal notifications
+    // Subscribe to personal notifications (including match notifications)
     useEffect(() => {
         if (!stompClient || !stompClient.connected || !currentUser) return;
         
-        const notificationTopic = `/topic/notification/${currentUser.id}`;
-        console.log(`🔔 Subscribing to personal notifications: ${notificationTopic}`);
+        // Subscribe to user-specific notification queue (recommended approach)
+        const userNotificationTopic = `/user/queue/notification`;
+        console.log(`🔔 Subscribing to user notifications: ${userNotificationTopic}`);
         
-        const notificationSubscription = stompClient.subscribe(notificationTopic, (message) => {
+        const userNotificationSubscription = stompClient.subscribe(userNotificationTopic, (message) => {
             try {
                 const data = JSON.parse(message.body);
-                console.log('🔔 Personal notification received:', data);
+                console.log('🔔 User notification received:', data);
                 
                 if (data.type === 'MATCH') {
-                    console.log('💕 Match notification:', data);
-                    alert(`Bạn đã match với ${data.matchedUsername}!`);
+                    console.log('💕 Match notification received:', data);
+                    
+                    // Call the match notification handler
+                    if (onMatchNotificationRef.current) {
+                        onMatchNotificationRef.current(data);
+                    } else {
+                        // Fallback to alert if no handler provided
+                        const matchedUsername = data.content?.split(' have matched')[0]?.split('You and ')[1] || 'someone';
+                        alert(`Bạn đã match với ${matchedUsername}!`);
+                    }
                 }
             } catch (err) {
-                console.error('❌ Error parsing notification message:', err);
+                console.error('❌ Error parsing user notification message:', err);
+            }
+        });
+
+        // Also subscribe to topic-based notifications (fallback)
+        const topicNotificationTopic = `/topic/notification/${currentUser.id}`;
+        console.log(`🔔 Subscribing to topic notifications: ${topicNotificationTopic}`);
+        
+        const topicNotificationSubscription = stompClient.subscribe(topicNotificationTopic, (message) => {
+            try {
+                const data = JSON.parse(message.body);
+                console.log('🔔 Topic notification received:', data);
+                
+                if (data.type === 'MATCH') {
+                    console.log('💕 Match notification received (topic):', data);
+                    
+                    // Call the match notification handler
+                    if (onMatchNotificationRef.current) {
+                        onMatchNotificationRef.current(data);
+                    } else {
+                        // Fallback to alert if no handler provided
+                        const matchedUsername = data.matchedUsername || data.content?.split(' have matched')[0]?.split('You and ')[1] || 'someone';
+                        alert(`Bạn đã match với ${matchedUsername}!`);
+                    }
+                }
+            } catch (err) {
+                console.error('❌ Error parsing topic notification message:', err);
             }
         });
         
         return () => {
-            console.log('🔕 Unsubscribing from personal notifications');
-            notificationSubscription.unsubscribe();
+            console.log('🔕 Unsubscribing from notifications');
+            userNotificationSubscription.unsubscribe();
+            topicNotificationSubscription.unsubscribe();
         };
     }, [stompClient, currentUser]);
 
@@ -156,9 +197,55 @@ export const useWebSocket = (authToken, currentUser, activeChat, onMessageReceiv
         subscriptions.current.clear(); 
     }, []);
 
+    // Send typing indicator
+    const sendTypingEvent = useCallback((chatRoomId, typing) => {
+        console.log('⌨️ [TYPING] Attempting to send typing event:', {
+            chatRoomId,
+            typing,
+            hasStompClient: !!stompClient,
+            isConnected: stompClient?.connected,
+            stompClientState: stompClient ? {
+                active: stompClient.active,
+                connected: stompClient.connected,
+                readyState: stompClient.webSocket?.readyState,
+                availableMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(stompClient)).filter(name => typeof stompClient[name] === 'function')
+            } : 'No stompClient'
+        });
+        
+        if (!stompClient || !stompClient.connected) {
+            console.error('❌ [TYPING] WebSocket not connected, cannot send typing event');
+            return;
+        }
+        
+        const typingMessage = {
+            chatRoomId: chatRoomId,
+            typing: typing
+        };
+        
+        console.log('📤 [TYPING] Sending typing event to backend:', typingMessage);
+        console.log('🔍 [TYPING] StompClient methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(stompClient)));
+        
+        try {
+            stompClient.publish({
+                destination: "/app/chat.typing",
+                body: JSON.stringify(typingMessage)
+            });
+            console.log('✅ [TYPING] Typing event sent successfully');
+        } catch (error) {
+            console.error('❌ [TYPING] Failed to send typing event:', error);
+            console.error('❌ [TYPING] Error details:', {
+                error: error.message,
+                stack: error.stack,
+                stompClientType: typeof stompClient,
+                stompClientMethods: stompClient ? Object.getOwnPropertyNames(Object.getPrototypeOf(stompClient)) : 'No stompClient'
+            });
+        }
+    }, [stompClient]);
+
     return {
         stompClient,
         subscribeToChats,
-        cleanupSubscriptions
+        cleanupSubscriptions,
+        sendTypingEvent
     };
 }; 

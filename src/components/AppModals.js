@@ -10,7 +10,11 @@ const AppModals = ({
     onCloseProfile,
     onCloseSettings,
     onCloseZoomedImage,
-    onZoomImage
+    onZoomImage,
+    isUserOnline,
+    getUserStatus,
+    formatLastSeen,
+    currentUser
 }) => {
     return (
         <>
@@ -19,6 +23,10 @@ const AppModals = ({
                     user={viewedProfile} 
                     onClose={onCloseProfile} 
                     onZoomImage={onZoomImage} 
+                    isUserOnline={isUserOnline}
+                    getUserStatus={getUserStatus}
+                    formatLastSeen={formatLastSeen}
+                    currentUser={currentUser}
                 />
             )}
             {isSettingsModalOpen && (

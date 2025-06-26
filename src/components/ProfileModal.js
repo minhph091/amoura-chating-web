@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { formatName } from '../utils';
 import { X, Heart, User, Mail, Phone, Calendar } from './Icons';
 
-const ProfileModal = ({ user, onClose, onZoomImage }) => {
+const ProfileModal = ({ user, onClose, onZoomImage, isUserOnline, getUserStatus, formatLastSeen, currentUser }) => {
     if (!user) return null;
     
     // Debug logging
@@ -74,6 +74,17 @@ const ProfileModal = ({ user, onClose, onZoomImage }) => {
     const displayName = getDisplayName();
     console.log('🔍 Final displayName:', displayName);
     
+    // Get user status - handle case when functions are not available
+    const userStatus = getUserStatus ? getUserStatus(user.id) : { status: 'ONLINE', lastSeen: null };
+    const isOnline = isUserOnline ? isUserOnline(user.id) : true; // Default to online for current user
+    
+    // Special handling for current user's own profile
+    const isCurrentUser = user.id === currentUser?.id;
+    const finalIsOnline = isCurrentUser ? (isUserOnline ? isUserOnline(user.id) : true) : isOnline;
+    const finalUserStatus = isCurrentUser 
+        ? (getUserStatus ? getUserStatus(user.id) : { status: 'ONLINE', lastSeen: null })
+        : userStatus;
+    
     return (
         <div 
             className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -103,16 +114,35 @@ const ProfileModal = ({ user, onClose, onZoomImage }) => {
                                 onClick={(e) => handleImageClick(e, user.photos?.[0]?.url)}
                                 onError={(e) => e.target.src='https://placehold.co/100x100/CCCCCC/FFFFFF?text=E'}
                             />
-                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-3 border-white dark:border-gray-800 rounded-full"></div>
+                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 border-3 border-white dark:border-gray-800 rounded-full transition-all duration-300 ${
+                                finalIsOnline 
+                                    ? 'bg-green-500 animate-pulse' 
+                                    : 'bg-gray-400'
+                            }`}></div>
                         </div>
                         
                         <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent mb-2">
                             {formatName(displayName)}
                         </h2>
                         
-                        <div className="flex items-center justify-center space-x-2 text-green-600 dark:text-green-400">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-medium">Đang hoạt động</span>
+                        <div className={`flex items-center justify-center space-x-2 transition-colors duration-300 ${
+                            finalIsOnline 
+                                ? 'text-green-600 dark:text-green-400' 
+                                : 'text-gray-500 dark:text-gray-400'
+                        }`}>
+                            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                finalIsOnline 
+                                    ? 'bg-green-500 animate-pulse' 
+                                    : 'bg-gray-400'
+                            }`}></div>
+                            <span className="text-sm font-medium">
+                                {finalIsOnline 
+                                    ? 'Đang hoạt động' 
+                                    : finalUserStatus.lastSeen && formatLastSeen
+                                        ? `Hoạt động ${formatLastSeen(finalUserStatus.lastSeen)}`
+                                        : 'Không hoạt động'
+                                }
+                            </span>
                         </div>
                     </div>
                 </div>

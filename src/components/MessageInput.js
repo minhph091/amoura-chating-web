@@ -1,10 +1,12 @@
-import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Paperclip, Smile, Send, Heart } from './Icons';
 
-const MessageInput = forwardRef(({ onSendMessage, onUploadImage, chatId }, ref) => {
+const MessageInput = forwardRef(({ onSendMessage, onUploadImage, chatId, onTypingChange }, ref) => {
     const [newMessage, setNewMessage] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
     const fileInputRef = useRef(null);
     const textInputRef = useRef(null);
+    const typingTimeoutRef = useRef(null);
 
     // Expose focus method to parent component
     useImperativeHandle(ref, () => ({
@@ -13,9 +15,53 @@ const MessageInput = forwardRef(({ onSendMessage, onUploadImage, chatId }, ref) 
         }
     }));
 
+    // Handle typing events with debounce
+    const handleTyping = () => {
+        console.log('⌨️ [INPUT] handleTyping triggered:', {
+            chatId,
+            currentIsTyping: isTyping,
+            hasOnTypingChange: !!onTypingChange
+        });
+        
+        if (!isTyping && onTypingChange) {
+            console.log('🚀 [INPUT] Starting typing indicator');
+            setIsTyping(true);
+            onTypingChange(chatId, true);
+        }
+        
+        // Reset timeout
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            if (isTyping && onTypingChange) {
+                console.log('⏹️ [INPUT] Stopping typing indicator (timeout)');
+                setIsTyping(false);
+                onTypingChange(chatId, false);
+            }
+        }, 2000); // 2 seconds after stopping typing
+    };
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const handleSendMessageSubmit = (e) => { 
         e.preventDefault(); 
         if (newMessage.trim()) { 
+            console.log('📤 [INPUT] Sending message, stopping typing indicator');
+            
+            // Stop typing indicator when sending message
+            if (isTyping && onTypingChange) {
+                console.log('⏹️ [INPUT] Stopping typing indicator (message sent)');
+                setIsTyping(false);
+                onTypingChange(chatId, false);
+                clearTimeout(typingTimeoutRef.current);
+            }
+            
             onSendMessage(chatId, newMessage, 'TEXT'); 
             setNewMessage(''); 
         } 
@@ -26,6 +72,11 @@ const MessageInput = forwardRef(({ onSendMessage, onUploadImage, chatId }, ref) 
             e.preventDefault();
             handleSendMessageSubmit(e);
         }
+    };
+
+    const handleInputChange = (e) => {
+        setNewMessage(e.target.value);
+        handleTyping(); // Trigger typing indicator
     };
 
     const handleFileSelect = (e) => { 
@@ -56,7 +107,7 @@ const MessageInput = forwardRef(({ onSendMessage, onUploadImage, chatId }, ref) 
                         ref={textInputRef}
                         type="text" 
                         value={newMessage} 
-                        onChange={(e) => setNewMessage(e.target.value)} 
+                        onChange={handleInputChange}
                         onKeyDown={handleInputKeyDown}
                         placeholder="Nhập tin nhắn..." 
                         className="w-full px-4 py-3 text-gray-900 dark:text-white bg-white/70 dark:bg-gray-700/70 placeholder-gray-500 dark:placeholder-gray-400 border border-pink-200/50 dark:border-purple-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm transition-all duration-300 shadow-lg" 
