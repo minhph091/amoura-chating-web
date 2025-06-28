@@ -12,6 +12,7 @@ const LoginScreen = React.memo(({ onLoginSuccess, apiRequest }) => {
     const [language, setLanguage] = useState('vi');
     const isMounted = useRef(true);
     const visualPaneRef = useRef(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Language data
     const langData = {
@@ -224,7 +225,7 @@ const LoginScreen = React.memo(({ onLoginSuccess, apiRequest }) => {
                                 <input 
                                     id="password" 
                                     name="password" 
-                                    type="password" 
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -237,9 +238,29 @@ const LoginScreen = React.memo(({ onLoginSuccess, apiRequest }) => {
                                         borderRadius: '0',
                                         paddingLeft: '2.5rem',
                                         paddingBottom: '0.75rem',
-                                        transition: 'border-color 0.3s ease'
+                                        transition: 'border-color 0.3s ease',
+                                        paddingRight: '2.5rem',
                                     }}
                                 />
+                                {/* Eye icon toggle */}
+                                <button
+                                    type="button"
+                                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                                    onClick={() => setShowPassword(v => !v)}
+                                    tabIndex={-1}
+                                    style={{ position: 'absolute', right: 0, top: 0, height: '100%', display: 'flex', alignItems: 'center', background: 'none', border: 'none', padding: '0 0.75rem', cursor: 'pointer' }}
+                                >
+                                    {showPassword ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12.01c2.12 3.77 6.07 6.24 10.066 6.24 2.042 0 3.977-.57 5.617-1.56M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.02 3.777A10.477 10.477 0 0022.066 12.01c-2.12-3.77-6.07-6.24-10.066-6.24-2.042 0-3.977.57-5.617 1.56" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-.274.857-.676 1.664-1.186 2.393M15 12a3 3 0 11-6 0 3 3 0 016 0zm-6.364 6.364A9.956 9.956 0 0112 19c4.478 0 8.268-2.943 9.542-7a9.956 9.956 0 00-1.186-2.393" />
+                                        </svg>
+                                    )}
+                                </button>
                             </div>
                             
                             {/* Remember Me & Forgot Password */}
