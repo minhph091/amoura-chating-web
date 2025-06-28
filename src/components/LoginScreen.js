@@ -1,24 +1,81 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Eye, EyeOff, Heart, Sparkles } from './Icons';
+import nightsky from '../assets/images/nightsky.jpg';
 
 const EMAIL_STORAGE_KEY = 'amoura_email';
 
 const LoginScreen = React.memo(({ onLoginSuccess, apiRequest }) => {
-    const [email, setEmail] = useState('');
+    const [credential, setCredential] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [language, setLanguage] = useState('vi');
     const isMounted = useRef(true);
+    const visualPaneRef = useRef(null);
+
+    // Language data
+    const langData = {
+        vi: {
+            page_title: "Đăng nhập - Amoura",
+            slogan: "Nơi những vì sao dẫn lối cho tình yêu bắt đầu.",
+            welcome: "Chào mừng trở lại",
+            prompt: "Đăng nhập để tiếp tục cuộc hành trình của bạn.",
+            placeholder_credential: "Email hoặc Số điện thoại",
+            placeholder_password: "Mật khẩu",
+            login_button: "Đăng Nhập",
+            remember_me: "Ghi nhớ đăng nhập",
+            forgot_password: "Quên mật khẩu?",
+            no_account_prefix: "Chưa có tài khoản? Đăng ký tại ",
+            register_link_brand: "Amoura",
+        },
+        en: {
+            page_title: "Login - Amoura",
+            slogan: "Where stars align for love to begin.",
+            welcome: "Welcome Back",
+            prompt: "Login to continue your journey.",
+            placeholder_credential: "Email or Phone Number",
+            placeholder_password: "Password",
+            login_button: "Login",
+            remember_me: "Remember me",
+            forgot_password: "Forgot password?",
+            no_account_prefix: "Don't have an account? Sign up at ",
+            register_link_brand: "Amoura",
+        }
+    };
 
     useEffect(() => {
         isMounted.current = true;
         // Tự động điền lại email nếu có trong localStorage
         const savedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
         if (savedEmail) {
-            setEmail(savedEmail);
+            setCredential(savedEmail);
         }
+
+        // Add parallax effect
+        const visualPane = visualPaneRef.current;
+        if (visualPane) {
+            const handleMouseMove = (e) => {
+                const { clientWidth, clientHeight } = visualPane;
+                const x = (e.clientX / clientWidth) - 0.5;
+                const y = (e.clientY / clientHeight) - 0.5;
+
+                // Adjust the numbers (20) to control the parallax intensity
+                visualPane.style.backgroundPosition = `calc(50% + ${-x * 20}px) calc(50% + ${-y * 20}px)`;
+            };
+
+            const handleMouseLeave = () => {
+                visualPane.style.backgroundPosition = 'center';
+            };
+
+            visualPane.addEventListener('mousemove', handleMouseMove);
+            visualPane.addEventListener('mouseleave', handleMouseLeave);
+
+            return () => {
+                visualPane.removeEventListener('mousemove', handleMouseMove);
+                visualPane.removeEventListener('mouseleave', handleMouseLeave);
+            };
+        }
+
         return () => {
             isMounted.current = false;
         };
@@ -32,7 +89,7 @@ const LoginScreen = React.memo(({ onLoginSuccess, apiRequest }) => {
             const response = await apiRequest('/auth/login', {
                 method: 'POST',
                 body: {
-                    email,
+                    email: credential,
                     password,
                     loginType: 'EMAIL_PASSWORD',
                 }
@@ -50,157 +107,306 @@ const LoginScreen = React.memo(({ onLoginSuccess, apiRequest }) => {
         }
     };
 
+    const handleLanguageChange = (lang) => {
+        setLanguage(lang);
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center p-4 transition-all duration-500">
-            {/* Background decorative elements */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-300/30 to-purple-300/30 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-300/30 to-purple-300/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-pink-200/20 to-purple-200/20 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="min-h-screen w-full flex flex-col md:flex-row">
+            {/* Left Side: Visual & Branding with Parallax and Shooting Star Effect */}
+            <div 
+                ref={visualPaneRef}
+                className="w-full md:w-1/2 min-h-[40vh] md:min-h-screen flex flex-col justify-center items-center text-center p-8 text-white relative overflow-hidden"
+                style={{
+                    backgroundImage: `url(${nightsky})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    transition: 'background-position 0.4s ease-out'
+                }}>
+                {/* Shooting Stars Container (new, from login.html) */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                    <span className="shooting-star"></span>
+                </div>
+                
+                {/* Overlay for better text readability */}
+                <div className="absolute inset-0 bg-black opacity-50"></div>
+                
+                {/* Branding Content */}
+                <div className="relative z-10 animate-fade-in">
+                    <h1 className="text-6xl md:text-8xl font-bold tracking-wider text-shadow"
+                        style={{ fontFamily: 'Playfair Display, serif' }}>
+                        Amoura
+                    </h1>
+                    <p className="font-light text-xl md:text-2xl mt-4 max-w-md opacity-90">
+                        {langData[language].slogan}
+                    </p>
+                </div>
             </div>
 
-            <div className="relative w-full max-w-md">
-                {/* Main login card */}
-                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8 space-y-8 transition-all duration-500 hover:shadow-3xl">
-                    
-                    {/* Logo and Brand */}
-                    <div className="text-center space-y-4">
-                        <div className="relative inline-block">
-                            {/* Animated heart background */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                            <div className="relative bg-gradient-to-r from-pink-500 to-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                                <Heart size={32} className="text-white animate-pulse" />
-                            </div>
-                        </div>
-                        
-                        {/* Brand name with beautiful typography */}
-                        <div className="space-y-2">
-                            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-pulse">
-                                amoura
-                            </h1>
-                            <div className="flex items-center justify-center space-x-1">
-                                <Sparkles size={16} className="text-pink-400 animate-bounce" />
-                                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                    Nơi kết nối những trái tim
-                                </p>
-                                <Sparkles size={16} className="text-purple-400 animate-bounce delay-75" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Login form */}
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                                <span className="w-2 h-2 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full mr-2"></span>
-                                Email
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 text-gray-900 dark:text-white bg-white/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
-                                    placeholder="Nhập email của bạn"
-                                />
-                                <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-pink-400 to-purple-500 rounded-r-xl opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"></div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                                <span className="w-2 h-2 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full mr-2"></span>
-                                Mật khẩu
-                            </label>
-                            <div className="relative group">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 text-gray-900 dark:text-white bg-white/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 pr-12"
-                                    placeholder="Nhập mật khẩu"
-                                />
-                                <button 
-                                    type="button" 
-                                    onClick={() => setShowPassword(!showPassword)} 
-                                    className="absolute inset-y-0 right-0 px-4 text-gray-500 dark:text-gray-400 hover:text-purple-500 transition-colors duration-200"
-                                >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                                <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-purple-400 to-indigo-500 rounded-r-xl opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"></div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <label className="flex items-center space-x-2 cursor-pointer group">
-                                <div className="relative">
-                                    <input
-                                        type="checkbox"
-                                        id="rememberMe"
-                                        checked={rememberMe}
-                                        onChange={(e) => setRememberMe(e.target.checked)}
-                                        className="sr-only"
-                                    />
-                                    <div className={`w-5 h-5 border-2 rounded-md transition-all duration-200 flex items-center justify-center ${
-                                        rememberMe 
-                                            ? 'bg-gradient-to-r from-pink-500 to-purple-500 border-transparent' 
-                                            : 'border-gray-300 dark:border-gray-600 group-hover:border-purple-400'
-                                    }`}>
-                                        {rememberMe && (
-                                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                </div>
-                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-purple-600 transition-colors duration-200">
-                                    Ghi nhớ đăng nhập
-                                </span>
-                            </label>
-                        </div>
-
-                        {error && (
-                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
-                                <p className="text-sm text-red-600 dark:text-red-400 flex items-center">
-                                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                                    {error}
-                                </p>
-                            </div>
-                        )}
-
-                        <button 
-                            type="submit" 
-                            disabled={isLoading} 
-                            className="w-full py-3 font-semibold text-white bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-xl hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:via-gray-600 dark:disabled:to-gray-600 transition-all duration-300 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                        >
-                            {isLoading ? (
-                                <div className="flex items-center justify-center space-x-2">
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    <span>Đang đăng nhập...</span>
-                                </div>
-                            ) : (
-                                <span>Đăng nhập</span>
-                            )}
-                        </button>
-                    </form>
-
-                    {/* Footer */}
-                    <div className="text-center pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Bằng cách đăng nhập, bạn đồng ý với{' '}
-                            <span className="text-purple-500 hover:text-purple-600 cursor-pointer transition-colors duration-200">
-                                Điều khoản sử dụng
-                            </span>
-                        </p>
-                    </div>
+            {/* Right Side: Login Form */}
+            <div className="w-full md:w-1/2 flex flex-col p-8 md:p-16 relative"
+                 style={{ backgroundColor: '#110e22' }}>
+                {/* Language Switcher */}
+                <div className="absolute top-6 right-8 flex items-center gap-2 text-sm text-gray-400 z-10">
+                    <button 
+                        onClick={() => handleLanguageChange('vi')}
+                        className={`hover:text-white transition-colors ${language === 'vi' ? 'text-pink-400 font-medium' : ''}`}>
+                        VI
+                    </button>
+                    <span>/</span>
+                    <button 
+                        onClick={() => handleLanguageChange('en')}
+                        className={`hover:text-white transition-colors ${language === 'en' ? 'text-pink-400 font-medium' : ''}`}>
+                        EN
+                    </button>
                 </div>
 
-                {/* Floating elements */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full opacity-60 animate-bounce"></div>
-                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full opacity-60 animate-bounce delay-1000"></div>
+                {/* Centering Wrapper */}
+                <main className="flex-grow flex items-center justify-center">
+                    <div className="w-full max-w-md text-white relative">
+                        
+                        {/* Header */}
+                        <div className="text-left mb-10">
+                            <h2 className="text-4xl font-bold animate-fade-in">
+                                {langData[language].welcome}
+                            </h2>
+                            <p className="text-gray-400 mt-2 animate-fade-in animation-delay-200">
+                                {langData[language].prompt}
+                            </p>
+                        </div>
+
+                        {/* Login Form */}
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            {/* Email/Phone Input */}
+                            <div className="relative animate-fade-in animation-delay-400 input-group">
+                                <span className="absolute inset-y-0 left-0 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                    </svg>
+                                </span>
+                                <input 
+                                    id="credential" 
+                                    name="credential" 
+                                    type="text" 
+                                    required
+                                    value={credential}
+                                    onChange={(e) => setCredential(e.target.value)}
+                                    className="w-full input-underline placeholder-gray-500 text-white"
+                                    placeholder={langData[language].placeholder_credential}
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        border: 'none',
+                                        borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+                                        borderRadius: '0',
+                                        paddingLeft: '2.5rem',
+                                        paddingBottom: '0.75rem',
+                                        transition: 'border-color 0.3s ease'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Password Input */}
+                            <div className="relative animate-fade-in animation-delay-600 input-group">
+                                 <span className="absolute inset-y-0 left-0 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </span>
+                                <input 
+                                    id="password" 
+                                    name="password" 
+                                    type="password" 
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full input-underline placeholder-gray-500 text-white"
+                                    placeholder={langData[language].placeholder_password}
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        border: 'none',
+                                        borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+                                        borderRadius: '0',
+                                        paddingLeft: '2.5rem',
+                                        paddingBottom: '0.75rem',
+                                        transition: 'border-color 0.3s ease'
+                                    }}
+                                />
+                            </div>
+                            
+                            {/* Remember Me & Forgot Password */}
+                            <div className="flex items-center justify-between text-sm animate-fade-in animation-delay-800">
+                                <div className="flex items-center">
+                                    <input 
+                                        id="remember-me" 
+                                        name="remember-me" 
+                                        type="checkbox" 
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                        className="h-4 w-4 rounded border-gray-600 bg-gray-900 text-pink-600 focus:ring-pink-500 focus:ring-offset-gray-800"
+                                    />
+                                    <label htmlFor="remember-me" className="ml-2 block text-gray-400">
+                                        {langData[language].remember_me}
+                                    </label>
+                                </div>
+                                <a href="#" className="font-medium text-gray-400 hover:text-pink-400 transition duration-300">
+                                    {langData[language].forgot_password}
+                                </a>
+                            </div>
+                            
+                            {/* Error Message */}
+                            {error && (
+                                <div className="bg-red-900/20 border border-red-800 rounded-xl p-3 animate-fade-in">
+                                    <p className="text-sm text-red-400 flex items-center">
+                                        <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* Submit Button */}
+                            <div className="pt-4 animate-fade-in animation-delay-800">
+                                <button 
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full px-8 py-3 bg-pink-600 hover:bg-pink-700 rounded-full font-semibold text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#110e22] focus:ring-pink-500 transition-all duration-300 transform hover:scale-105 animate-pulse-glow disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? (
+                                        <div className="flex items-center justify-center space-x-2">
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <span>Đang đăng nhập...</span>
+                                        </div>
+                                    ) : (
+                                        langData[language].login_button
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+
+                        {/* Sign up link */}
+                        <div className="text-center mt-12 animate-fade-in animation-delay-800">
+                            <p className="text-sm text-gray-400">
+                                <span>{langData[language].no_account_prefix}</span>
+                                <a href="https://amoura.space" target="_blank" rel="noopener noreferrer" className="font-medium text-pink-500 hover:text-pink-400 transition-colors duration-300">
+                                    {langData[language].register_link_brand}
+                                </a>
+                            </p>
+                        </div>
+
+                    </div>
+                </main>
             </div>
+
+            {/* Custom CSS for animations and effects */}
+            <style jsx>{`
+                body {
+                    font-family: 'Be Vietnam Pro', sans-serif;
+                    background-color: #0c0a1a;
+                    overflow-x: hidden;
+                }
+                
+                .animate-fade-in {
+                    animation: fadeIn 0.8s ease-out forwards;
+                    opacity: 0;
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                .animation-delay-200 { animation-delay: 200ms; }
+                .animation-delay-400 { animation-delay: 400ms; }
+                .animation-delay-600 { animation-delay: 600ms; }
+                .animation-delay-800 { animation-delay: 800ms; }
+                
+                @keyframes pulse-glow {
+                    0%, 100% { box-shadow: 0 0 15px rgba(244, 114, 182, 0.4); }
+                    50% { box-shadow: 0 0 25px rgba(244, 114, 182, 0.7); }
+                }
+                .animate-pulse-glow {
+                    animation: pulse-glow 2.5s infinite ease-in-out;
+                }
+                
+                .input-group:focus-within .input-underline {
+                    border-bottom-color: #f472b6;
+                }
+                .input-group:focus-within .input-icon {
+                    color: #f472b6;
+                }
+                
+                .input-underline:focus {
+                    outline: none;
+                }
+                .input-icon {
+                    transition: color 0.3s ease;
+                }
+                
+                /* Shooting Star Effect (from login.html, scoped for login only) */
+                .shooting-star {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 3px;
+                    height: 3px;
+                    background: #fff;
+                    border-radius: 50%;
+                    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1), 0 0 0 8px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.1);
+                    animation: animate-star 3s linear infinite;
+                }
+                .shooting-star::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 300px;
+                    height: 1px;
+                    background: linear-gradient(90deg, #fff, transparent);
+                }
+                @keyframes animate-star {
+                    0% {
+                        transform: rotate(315deg) translateX(0);
+                        opacity: 1;
+                    }
+                    70% {
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: rotate(315deg) translateX(-1500px);
+                        opacity: 0;
+                    }
+                }
+                .shooting-star:nth-child(1) { top: 0; right: 0; left: initial; animation-delay: 0s; animation-duration: 1s; }
+                .shooting-star:nth-child(2) { top: 0; right: 80px; left: initial; animation-delay: 0.2s; animation-duration: 3s; }
+                .shooting-star:nth-child(3) { top: 80px; right: 0px; left: initial; animation-delay: 0.4s; animation-duration: 2s; }
+                .shooting-star:nth-child(4) { top: 0; right: 180px; left: initial; animation-delay: 0.6s; animation-duration: 1.5s; }
+                .shooting-star:nth-child(5) { top: 0; right: 400px; left: initial; animation-delay: 0.8s; animation-duration: 2.5s; }
+                .shooting-star:nth-child(6) { top: 0; right: 600px; left: initial; animation-delay: 1s; animation-duration: 3.5s; }
+                .shooting-star:nth-child(7) { top: 300px; right: 0px; left: initial; animation-delay: 1.2s; animation-duration: 1.75s; }
+                .shooting-star:nth-child(8) { top: 0px; right: 700px; left: initial; animation-delay: 1.4s; animation-duration: 1.25s; }
+                .shooting-star:nth-child(9) { top: 0px; right: 1000px; left: initial; animation-delay: 0.75s; animation-duration: 2.25s; }
+                .shooting-star:nth-child(10) { top: 0px; right: 450px; left: initial; animation-delay: 2.75s; animation-duration: 2.75s; }
+
+                /* Autofill fix for input fields */
+                input:-webkit-autofill,
+                input:-webkit-autofill:focus,
+                input:-webkit-autofill:hover,
+                input:-webkit-autofill:active {
+                  -webkit-box-shadow: 0 0 0 1000px #110e22 inset !important;
+                  box-shadow: 0 0 0 1000px #110e22 inset !important;
+                  -webkit-text-fill-color: #fff !important;
+                  caret-color: #fff !important;
+                  transition: background-color 9999s ease-in-out 0s;
+                }
+            `}</style>
         </div>
     );
 });

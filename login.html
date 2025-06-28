@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Đăng nhập - Amoura</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Be Vietnam Pro (for Vietnamese) & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Be+Vietnam+Pro:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom font styles */
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: #0c0a1a; /* Deep indigo background */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        .font-logo {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        /* Custom background with starry effect */
+        .starry-night {
+            background-image: url('https://images.unsplash.com/photo-1532372576444-69b5521ae310?q=80&w=1887&auto=format&fit=crop');
+            background-size: 110%; /* Slightly larger for parallax */
+            background-position: center;
+            transition: background-position 0.4s ease-out;
+        }
+
+        /* Input field underline style */
+        .input-group:focus-within .input-underline {
+             border-bottom-color: #f472b6; /* Pink accent */
+        }
+        .input-group:focus-within .input-icon {
+            color: #f472b6; /* Pink accent */
+        }
+        .input-underline {
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0;
+            padding-left: 2.5rem; /* Space for icon */
+            padding-bottom: 0.75rem;
+            transition: border-color 0.3s ease;
+        }
+        .input-underline:focus {
+            outline: none;
+        }
+        .input-icon {
+            transition: color 0.3s ease;
+        }
+
+        /* Language switcher style */
+        .lang-switcher button.active {
+            color: #f472b6;
+            font-weight: 500;
+        }
+
+        /* General animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0; /* Start as invisible */
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(244, 114, 182, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(244, 114, 182, 0.7); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2.5s infinite ease-in-out;
+        }
+        
+        .animation-delay-200 { animation-delay: 200ms; }
+        .animation-delay-400 { animation-delay: 400ms; }
+        .animation-delay-600 { animation-delay: 600ms; }
+        .animation-delay-800 { animation-delay: 800ms; }
+
+        /* --- START: SHOOTING STAR EFFECT --- */
+        .shooting-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 3px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1), 0 0 0 8px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.1);
+            animation: animate-star 3s linear infinite;
+        }
+        .shooting-star::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            height: 1px;
+            background: linear-gradient(90deg, #fff, transparent);
+        }
+        @keyframes animate-star {
+            0% {
+                transform: rotate(315deg) translateX(0);
+                opacity: 1;
+            }
+            70% {
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(315deg) translateX(-1500px);
+                opacity: 0;
+            }
+        }
+        .shooting-star:nth-child(1) { top: 0; right: 0; left: initial; animation-delay: 0s; animation-duration: 1s; }
+        .shooting-star:nth-child(2) { top: 0; right: 80px; left: initial; animation-delay: 0.2s; animation-duration: 3s; }
+        .shooting-star:nth-child(3) { top: 80px; right: 0px; left: initial; animation-delay: 0.4s; animation-duration: 2s; }
+        .shooting-star:nth-child(4) { top: 0; right: 180px; left: initial; animation-delay: 0.6s; animation-duration: 1.5s; }
+        .shooting-star:nth-child(5) { top: 0; right: 400px; left: initial; animation-delay: 0.8s; animation-duration: 2.5s; }
+        .shooting-star:nth-child(6) { top: 0; right: 600px; left: initial; animation-delay: 1s; animation-duration: 3.5s; }
+        .shooting-star:nth-child(7) { top: 300px; right: 0px; left: initial; animation-delay: 1.2s; animation-duration: 1.75s; }
+        .shooting-star:nth-child(8) { top: 0px; right: 700px; left: initial; animation-delay: 1.4s; animation-duration: 1.25s; }
+        .shooting-star:nth-child(9) { top: 0px; right: 1000px; left: initial; animation-delay: 0.75s; animation-duration: 2.25s; }
+        .shooting-star:nth-child(10) { top: 0px; right: 450px; left: initial; animation-delay: 2.75s; animation-duration: 2.75s; }
+        /* --- END: SHOOTING STAR EFFECT --- */
+
+    </style>
+</head>
+<body>
+
+    <div class="min-h-screen w-full flex flex-col md:flex-row">
+        <!-- Left Side: Visual & Branding with Parallax and Shooting Star Effect -->
+        <div id="visual-pane" class="w-full md:w-1/2 min-h-[40vh] md:min-h-screen starry-night flex flex-col justify-center items-center text-center p-8 text-white relative overflow-hidden">
+            <!-- Shooting Stars Container -->
+            <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+                <span class="shooting-star"></span>
+            </div>
+            
+            <!-- Overlay for better text readability -->
+            <div class="absolute inset-0 bg-black opacity-50"></div>
+            
+            <!-- Branding Content -->
+            <div class="relative z-10 animate-fade-in">
+                <h1 class="font-logo text-6xl md:text-8xl font-bold tracking-wider text-shadow">
+                    Amoura
+                </h1>
+                <p class="font-light text-xl md:text-2xl mt-4 max-w-md opacity-90" data-lang-key="slogan">
+                    Nơi những vì sao dẫn lối cho tình yêu bắt đầu.
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="w-full md:w-1/2 bg-[#110e22] flex flex-col p-8 md:p-16 relative">
+            <!-- Language Switcher -->
+            <div class="absolute top-6 right-8 lang-switcher flex items-center gap-2 text-sm text-gray-400 z-10">
+                <button id="lang-vi" class="hover:text-white transition-colors active">VI</button>
+                <span>/</span>
+                <button id="lang-en" class="hover:text-white transition-colors">EN</button>
+            </div>
+
+            <!-- Centering Wrapper -->
+            <main class="flex-grow flex items-center justify-center">
+                <div class="w-full max-w-md text-white relative">
+                    
+                    <!-- Header -->
+                    <div class="text-left mb-10">
+                        <h2 class="text-4xl font-bold animate-fade-in" data-lang-key="welcome">Chào mừng trở lại</h2>
+                        <p class="text-gray-400 mt-2 animate-fade-in animation-delay-200" data-lang-key="prompt">Đăng nhập để tiếp tục cuộc hành trình của bạn.</p>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form action="#" method="POST" class="space-y-6">
+                        <!-- Email/Phone Input -->
+                        <div class="relative animate-fade-in animation-delay-400 input-group">
+                            <span class="absolute inset-y-0 left-0 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                </svg>
+                            </span>
+                            <input id="credential" name="credential" type="text" required
+                                class="w-full input-underline placeholder-gray-500 text-white"
+                                placeholder="Email hoặc Số điện thoại" data-lang-key="placeholder_credential">
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="relative animate-fade-in animation-delay-600 input-group">
+                             <span class="absolute inset-y-0 left-0 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </span>
+                            <input id="password" name="password" type="password" required
+                                class="w-full input-underline placeholder-gray-500 text-white"
+                                placeholder="Mật khẩu" data-lang-key="placeholder_password">
+                        </div>
+                        
+                        <!-- Remember Me & Forgot Password -->
+                        <div class="flex items-center justify-between text-sm animate-fade-in animation-delay-800">
+                            <div class="flex items-center">
+                                <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-pink-600 focus:ring-pink-500 focus:ring-offset-gray-800">
+                                <label for="remember-me" class="ml-2 block text-gray-400" data-lang-key="remember_me">Ghi nhớ đăng nhập</label>
+                            </div>
+                            <a href="#" class="font-medium text-gray-400 hover:text-pink-400 transition duration-300" data-lang-key="forgot_password">Quên mật khẩu?</a>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="pt-4 animate-fade-in animation-delay-800">
+                            <button type="submit"
+                                class="w-full px-8 py-3 bg-pink-600 hover:bg-pink-700 rounded-full font-semibold text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#110e22] focus:ring-pink-500 transition-all duration-300 transform hover:scale-105 animate-pulse-glow" data-lang-key="login_button">
+                                Đăng Nhập
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Sign up link -->
+                    <div class="text-center mt-12 animate-fade-in animation-delay-800">
+                        <p class="text-sm text-gray-400">
+                            <span data-lang-key="no_account_prefix">Chưa có tài khoản? Đăng ký tại </span>
+                            <a href="https://amoura.space" target="_blank" class="font-medium text-pink-500 hover:text-pink-400 transition-colors duration-300" data-lang-key="register_link_brand">
+                                Amoura
+                            </a>
+                        </p>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // --- START: LANGUAGE SWITCHER LOGIC ---
+        const langData = {
+            vi: {
+                page_title: "Đăng nhập - Amoura",
+                slogan: "Nơi những vì sao dẫn lối cho tình yêu bắt đầu.",
+                welcome: "Chào mừng trở lại",
+                prompt: "Đăng nhập để tiếp tục cuộc hành trình của bạn.",
+                placeholder_credential: "Email hoặc Số điện thoại",
+                placeholder_password: "Mật khẩu",
+                login_button: "Đăng Nhập",
+                remember_me: "Ghi nhớ đăng nhập",
+                forgot_password: "Quên mật khẩu?",
+                no_account_prefix: "Chưa có tài khoản? Đăng ký tại ",
+                register_link_brand: "đây",
+            },
+            en: {
+                page_title: "Login - Amoura",
+                slogan: "Where stars align for love to begin.",
+                welcome: "Welcome Back",
+                prompt: "Login to continue your journey.",
+                placeholder_credential: "Email or Phone Number",
+                placeholder_password: "Password",
+                login_button: "Login",
+                remember_me: "Remember me",
+                forgot_password: "Forgot password?",
+                no_account_prefix: "Don't have an account? Sign up at ",
+                register_link_brand: "Amoura",
+            }
+        };
+
+        const setLanguage = (lang) => {
+            document.documentElement.lang = lang;
+            document.getElementById('page-title').textContent = langData[lang].page_title;
+            
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                if (el.tagName === 'INPUT') {
+                    el.placeholder = langData[lang][key];
+                } else {
+                    el.textContent = langData[lang][key];
+                }
+            });
+
+            // Update active button style
+            document.getElementById('lang-vi').classList.toggle('active', lang === 'vi');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+        };
+
+        document.getElementById('lang-vi').addEventListener('click', () => setLanguage('vi'));
+        document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+        // --- END: LANGUAGE SWITCHER LOGIC ---
+
+
+        // Parallax effect for the starry night background
+        const visualPane = document.getElementById('visual-pane');
+        if (visualPane) {
+            visualPane.addEventListener('mousemove', (e) => {
+                const { clientWidth, clientHeight } = visualPane;
+                const x = (e.clientX / clientWidth) - 0.5;
+                const y = (e.clientY / clientHeight) - 0.5;
+
+                // Adjust the numbers (20) to control the parallax intensity
+                visualPane.style.backgroundPosition = `calc(50% + ${-x * 20}px) calc(50% + ${-y * 20}px)`;
+            });
+             visualPane.addEventListener('mouseleave', (e) => {
+                visualPane.style.backgroundPosition = `center`;
+            });
+        }
+
+        // Set default language on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setLanguage('vi');
+        });
+    </script>
+</body>
+</html>
