@@ -21,8 +21,8 @@ export const isProduction = process.env.NODE_ENV === 'production';
 // Override URLs for different environments
 if (isProduction) {
     // Production URLs (replace with your actual production URLs)
-    API_CONFIG.BASE_URL = 'http://150.95.109.13:8080/api';
-    API_CONFIG.WS_URL = 'http://150.95.109.13:8080/api/ws';
+    API_CONFIG.BASE_URL = 'https://api.amoura.space/api';
+    API_CONFIG.WS_URL = 'wss://api.amoura.space/api/ws';
 }
 // Local development overrides (you can change these for local testing)
 if (isDevelopment) {
